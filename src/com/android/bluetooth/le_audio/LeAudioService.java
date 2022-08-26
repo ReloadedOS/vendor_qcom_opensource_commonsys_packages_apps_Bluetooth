@@ -1071,10 +1071,6 @@ public class LeAudioService extends ProfileService {
 
         activeDevices.add(0, null);
         activeDevices.add(1, null);
-        if (ApmConstIntf.getQtiLeAudioEnabled()) {
-            Log.d(TAG, "QTI LeAudio is enabled, return empty list");
-            return activeDevices;
-        }
 
         ActiveDeviceManagerServiceIntf activeDeviceManager =
                                             ActiveDeviceManagerServiceIntf.get();
