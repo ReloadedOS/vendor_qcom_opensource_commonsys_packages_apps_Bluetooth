@@ -184,6 +184,8 @@ public class BluetoothInCallService extends InCallService {
 
     public CallInfo mCallInfo = new CallInfo();
 
+    protected boolean mServiceCreated = false;
+
     /**
      * Listens to connections and disconnections of bluetooth headsets.  We need to save the current
      * bluetooth headset so that we know where to send BluetoothCall updates.
@@ -576,6 +578,10 @@ public class BluetoothInCallService extends InCallService {
 
     @RequiresPermission(android.Manifest.permission.MODIFY_PHONE_STATE)
     public boolean listCurrentCalls(int profile) {
+        if (mServiceCreated == false) {
+            Log.w(TAG, "listCurrentCalls called when service is not created");
+            return false;
+        }
         if (ApmConstIntf.AudioProfiles.HFP == profile) {
             Log.d(TAG, "listCurrentCalls: hfp");
             Intent DsdaIntent = new Intent(ACTION_DSDA_CALL_STATE_CHANGE);
@@ -780,6 +786,8 @@ public class BluetoothInCallService extends InCallService {
         mAudioManager = getSystemService(AudioManager.class);
         mAudioManager.addOnModeChangedListener(
                 Executors.newSingleThreadExecutor(), mBluetoothOnModeChangedListener);
+
+        mServiceCreated = true;
     }
 
     @Override
@@ -796,7 +804,8 @@ public class BluetoothInCallService extends InCallService {
         if (mBluetoothHeadset != null) {
             mBluetoothHeadset.closeBluetoothHeadsetProxy(this);
             mBluetoothHeadset = null;
-         }
+        }
+        mServiceCreated = false;
         super.onDestroy();
     }
 
@@ -903,7 +912,7 @@ public class BluetoothInCallService extends InCallService {
         String subsNum = getSubscriberNumber();
         if (subsNum != null && address != null) {
             Log.d(TAG, "subscriber number " + subsNum + " address " + address);
-            if (subsNum.contains(address)) {
+            if (subsNum.equals(address)) {
                 Log.w(TAG, "return without sending host call in CLCC");
                   return;
             }

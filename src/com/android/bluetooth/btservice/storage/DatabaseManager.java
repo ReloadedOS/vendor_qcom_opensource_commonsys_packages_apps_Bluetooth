@@ -820,7 +820,7 @@ public class DatabaseManager {
             Metadata metadata = mMetadataCache.get(address);
             if (metadata.is_connected_a2dpsrc_device) {
                 metadata.is_connected_a2dpsrc_device = false;
-                Log.w(TAG, "setDisconnectionForA2dpSrc: Set setDisconnectionForA2dpSrc to false" +
+                Log.w(TAG, "setDisconnectionForA2dpSrc: Set is_connected_a2dpsrc_device to false" +
                                      " for device: " + device.getAnonymizedAddress());
                 updateDatabase(metadata);
             }

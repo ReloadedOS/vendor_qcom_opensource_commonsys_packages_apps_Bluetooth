@@ -123,8 +123,10 @@ import android.bluetooth.BluetoothAdapter.ActiveDeviceProfile;
 import android.bluetooth.BluetoothAdapter.ActiveDeviceUse;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothMap;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothProtoEnums;
+import android.bluetooth.BluetoothSap;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothStatusCodes;
@@ -1073,9 +1075,6 @@ public class AdapterService extends Service {
             mAdapter = null;
         }
 
-        BluetoothAdapter.invalidateGetProfileConnectionStateCache();
-        BluetoothAdapter.invalidateIsOffloadedFilteringSupportedCache();
-
         clearAdapterService(this);
 
         mCleaningUp = true;
@@ -1184,6 +1183,9 @@ public class AdapterService extends Service {
         BluetoothAdapter.invalidateIsOffloadedFilteringSupportedCache();
         BluetoothDevice.invalidateBluetoothGetBondStateCache();
         BluetoothAdapter.invalidateBluetoothGetStateCache();
+        BluetoothAdapter.invalidateGetAdapterConnectionStateCache();
+        BluetoothMap.invalidateBluetoothGetConnectionStateCache();
+        BluetoothSap.invalidateBluetoothGetConnectionStateCache();
     }
 
     private void setProfileServiceState(Class service, int state) {
@@ -1898,7 +1900,7 @@ public class AdapterService extends Service {
         try {
             bluetoothServerSocket =
                     mAdapter.listenUsingRfcommWithServiceRecord(name, uuid);
-        } catch (IOException e) {
+        } catch (IOException|SecurityException e) {
             Log.e(TAG, "handleIncomingRfcommConnections IOException:" + e.getMessage());
             return;
         }
@@ -4691,9 +4693,18 @@ public class AdapterService extends Service {
                 return false;
         }
 
+        boolean isLeAudioDeviceActive = false;
+        for (BluetoothDevice dev : getActiveDevices(BluetoothProfile.LE_AUDIO)) {
+            if (dev != null) {
+                Log.i(TAG, "setActiveDevice: LE audio device is active");
+                isLeAudioDeviceActive = true;
+                break;
+            }
+        }
+
         //Make only Le-A device setactive when qti LE-A not enabled.
         if (!isQtiLeAudioEnabled &&
-            mLeAudioService != null && (device == null
+            mLeAudioService != null && (device == null && isLeAudioDeviceActive
                 || mLeAudioService.getConnectionPolicy(device)
                 == BluetoothProfile.CONNECTION_POLICY_ALLOWED)) {
             Log.i(TAG, "setActiveDevice: Setting active Le Audio device " + device);

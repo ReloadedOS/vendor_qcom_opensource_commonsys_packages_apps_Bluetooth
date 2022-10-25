@@ -671,8 +671,8 @@ public class HeadsetService extends ProfileService {
 
         @Override
         public boolean connect(BluetoothDevice device) {
-             if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                 Log.d(TAG, "connect Adv Audio enabled");
+            if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                Log.d(TAG, "connect(): Adv Audio enabled");
                 CallAudioIntf mCallAudio = CallAudioIntf.get();
                 return mCallAudio.connect(device);
             }
@@ -688,12 +688,22 @@ public class HeadsetService extends ProfileService {
         public void connectWithAttribution(BluetoothDevice device, AttributionSource source,
                 SynchronousResultReceiver receiver) {
             try {
-                HeadsetService service = getService(source);
                 boolean defaultValue = false;
-                if (service != null) {
-                    defaultValue = service.connect(device);
+                if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                    Log.d(TAG, "connectWithAttribution(): Adv Audio enabled");
+                    CallAudioIntf mCallAudio = CallAudioIntf.get();
+                    if (mCallAudio != null) {
+                        defaultValue = mCallAudio.connect(device);
+                    }
+                    receiver.send(defaultValue);
+                } else {
+                    Log.w(TAG, "LE Audio not enabled");
+                    HeadsetService service = getService(source);
+                    if (service != null) {
+                        defaultValue = service.connect(device);
+                    }
+                    receiver.send(defaultValue);
                 }
-                receiver.send(defaultValue);
             } catch (RuntimeException e) {
                 receiver.propagateException(e);
             }
@@ -701,8 +711,8 @@ public class HeadsetService extends ProfileService {
 
         @Override
         public boolean disconnect(BluetoothDevice device) {
-            if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                 Log.d(TAG, "disconnect Adv Audio enabled");
+            if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                Log.d(TAG, "disconnect(): Adv Audio enabled");
                 CallAudioIntf mCallAudio = CallAudioIntf.get();
                 return mCallAudio.disconnect(device);
             }
@@ -718,12 +728,22 @@ public class HeadsetService extends ProfileService {
         public void disconnectWithAttribution(BluetoothDevice device, AttributionSource source,
                 SynchronousResultReceiver receiver) {
             try {
-                HeadsetService service = getService(source);
                 boolean defaultValue = false;
-                if (service != null) {
-                    defaultValue = service.disconnect(device);
+                if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                    Log.d(TAG, "disconnectWithAttribution(): Adv Audio enabled");
+                    CallAudioIntf mCallAudio = CallAudioIntf.get();
+                    if (mCallAudio != null) {
+                        defaultValue = mCallAudio.disconnect(device);
+                    }
+                    receiver.send(defaultValue);
+                } else {
+                    Log.w(TAG, "LE Audio not enabled");
+                    HeadsetService service = getService(source);
+                    if (service != null) {
+                        defaultValue = service.disconnect(device);
+                    }
+                    receiver.send(defaultValue);
                 }
-                receiver.send(defaultValue);
             } catch (RuntimeException e) {
                 receiver.propagateException(e);
             }
@@ -731,8 +751,8 @@ public class HeadsetService extends ProfileService {
 
         @Override
         public List<BluetoothDevice> getConnectedDevices() {
-            if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                 Log.d(TAG, "getConnectedDevices Adv Audio enabled");
+            if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                Log.d(TAG, "getConnectedDevices(): Adv Audio enabled");
                 CallAudioIntf mCallAudio = CallAudioIntf.get();
                 return mCallAudio.getConnectedDevices();
             }
@@ -748,12 +768,22 @@ public class HeadsetService extends ProfileService {
         public void getConnectedDevicesWithAttribution(AttributionSource source,
                 SynchronousResultReceiver receiver) {
             try {
-                HeadsetService service = getService(source);
                 List<BluetoothDevice> defaultValue = new ArrayList<BluetoothDevice>(0);
-                if (service != null) {
-                    defaultValue = service.getConnectedDevices();
+                if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                    Log.d(TAG, "getConnectedDevicesWithAttribution(): Adv Audio enabled");
+                    CallAudioIntf mCallAudio = CallAudioIntf.get();
+                    if (mCallAudio != null) {
+                        defaultValue = mCallAudio.getConnectedDevices();
+                    }
+                    receiver.send(defaultValue);
+                } else {
+                    Log.w(TAG, "LE Audio not enabled");
+                    HeadsetService service = getService(source);
+                    if (service != null) {
+                        defaultValue = service.getConnectedDevices();
+                    }
+                    receiver.send(defaultValue);
                 }
-                receiver.send(defaultValue);
             } catch (RuntimeException e) {
                 receiver.propagateException(e);
             }
@@ -764,12 +794,13 @@ public class HeadsetService extends ProfileService {
                 AttributionSource source, SynchronousResultReceiver receiver) {
             try {
                 List<BluetoothDevice> defaultValue = new ArrayList<BluetoothDevice>(0);
-                if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                    Log.d(TAG, "getDevicesMatchingConnectionStates Adv Audio enabled");
+                if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                    Log.d(TAG, "getDevicesMatchingConnectionStates(): Adv Audio enabled");
                     CallAudioIntf mCallAudio = CallAudioIntf.get();
                     defaultValue = mCallAudio.getDevicesMatchingConnectionStates(states);
                     receiver.send(defaultValue);
                 } else {
+                    Log.w(TAG, "LE Audio not enabled");
                     HeadsetService service = getService(source);
                     if (service != null) {
                         defaultValue = service.getDevicesMatchingConnectionStates(states);
@@ -791,8 +822,8 @@ public class HeadsetService extends ProfileService {
 
         @Override
         public int getConnectionState(BluetoothDevice device) {
-            if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                 Log.d(TAG, "getConnectionState Adv Audio enabled");
+            if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                Log.d(TAG, "getConnectionState(): Adv Audio enabled");
                 CallAudioIntf mCallAudio = CallAudioIntf.get();
                 return mCallAudio.getConnectionState(device);
             }
@@ -808,12 +839,22 @@ public class HeadsetService extends ProfileService {
         public void getConnectionStateWithAttribution(BluetoothDevice device,
                 AttributionSource source, SynchronousResultReceiver receiver) {
             try {
-                HeadsetService service = getService(source);
                 int defaultValue = BluetoothProfile.STATE_DISCONNECTED;
-                if (service != null) {
-                    defaultValue = service.getConnectionState(device);
+                if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                    Log.d(TAG, "getConnectionStateWithAttribution(): Adv Audio enabled");
+                    CallAudioIntf mCallAudio = CallAudioIntf.get();
+                    if (mCallAudio != null) {
+                        defaultValue = mCallAudio.getConnectionState(device);
+                    }
+                    receiver.send(defaultValue);
+                } else {
+                    Log.w(TAG, "LE Audio not enabled");
+                    HeadsetService service = getService(source);
+                    if (service != null) {
+                        defaultValue = service.getConnectionState(device);
+                    }
+                    receiver.send(defaultValue);
                 }
-                receiver.send(defaultValue);
             } catch (RuntimeException e) {
                 receiver.propagateException(e);
             }
@@ -824,12 +865,13 @@ public class HeadsetService extends ProfileService {
                 AttributionSource source, SynchronousResultReceiver receiver) {
             try {
                 boolean defaultValue = false;
-                if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                     Log.d(TAG, "setConnectionPolicy Adv Audio enabled");
+                if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                    Log.d(TAG, "setConnectionPolicy(): Adv Audio enabled");
                     CallAudioIntf mCallAudio = CallAudioIntf.get();
                     defaultValue =  mCallAudio.setConnectionPolicy(device, connectionPolicy);
                     receiver.send(defaultValue);
                 } else {
+                    Log.w(TAG, "LE Audio not enabled");
                     HeadsetService service = getService(source);
                     if (service != null) {
                         defaultValue = service.setConnectionPolicy(device, connectionPolicy);
@@ -846,12 +888,13 @@ public class HeadsetService extends ProfileService {
                 SynchronousResultReceiver receiver) {
             try {
                 int defaultValue = BluetoothProfile.CONNECTION_POLICY_UNKNOWN;
-                if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                     Log.d(TAG, "getConnectionPolicy Adv Audio enabled");
+                if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                    Log.d(TAG, "getConnectionPolicy Adv Audio enabled");
                     CallAudioIntf mCallAudio = CallAudioIntf.get();
                     defaultValue = mCallAudio.getConnectionPolicy(device);
                     receiver.send(defaultValue);
                 } else {
+                    Log.w(TAG, "LE Audio not enabled");
                     HeadsetService service = getService(source);
                     if (service != null) {
                         defaultValue = service.getConnectionPolicy(device);
@@ -864,8 +907,8 @@ public class HeadsetService extends ProfileService {
         }
 
         public int getPriority(BluetoothDevice device, AttributionSource source) {
-            if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                 Log.d(TAG, "getPriority Adv Audio enabled");
+            if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                Log.d(TAG, "getPriority Adv Audio enabled");
                 CallAudioIntf mCallAudio = CallAudioIntf.get();
                 return mCallAudio.getConnectionPolicy(device);
             }
@@ -941,7 +984,7 @@ public class HeadsetService extends ProfileService {
             try {
                 boolean defaultValue = false;
                 if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                    Log.d(TAG, "isAudioOn Adv Audio enabled");
+                    Log.d(TAG, "isAudioOn(): Adv Audio enabled");
                     CallAudioIntf mCallAudio = CallAudioIntf.get();
                     defaultValue = mCallAudio.isAudioOn();
                     receiver.send(defaultValue);
@@ -978,7 +1021,7 @@ public class HeadsetService extends ProfileService {
             try {
                 int defaultValue = BluetoothHeadset.STATE_AUDIO_DISCONNECTED;
                 if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                     Log.d(TAG, "getAudioState Adv Audio enabled");
+                     Log.d(TAG, "getAudioState(): Adv Audio enabled");
                     CallAudioIntf mCallAudio = CallAudioIntf.get();
                     defaultValue = mCallAudio.getAudioState(device);
                     receiver.send(defaultValue);
@@ -999,7 +1042,7 @@ public class HeadsetService extends ProfileService {
             try {
                 int defaultValue = BluetoothStatusCodes.ERROR_PROFILE_SERVICE_NOT_BOUND;
                 if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                     Log.d(TAG, "connectAudio Adv Audio enabled");
+                     Log.d(TAG, "connectAudio(): Adv Audio enabled");
                     CallAudioIntf mCallAudio = CallAudioIntf.get();
                     if (mCallAudio != null) {
                         defaultValue = mCallAudio.connectAudio();
@@ -1022,7 +1065,7 @@ public class HeadsetService extends ProfileService {
             try {
                 int defaultValue = BluetoothStatusCodes.ERROR_PROFILE_SERVICE_NOT_BOUND;
                 if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                     Log.d(TAG, "disconnectAudio Adv Audio enabled");
+                     Log.d(TAG, "disconnectAudio(): Adv Audio enabled");
                     CallAudioIntf mCallAudio = CallAudioIntf.get();
                     if (mCallAudio != null) {
                         defaultValue = mCallAudio.disconnectAudio();
@@ -1089,7 +1132,7 @@ public class HeadsetService extends ProfileService {
             try {
                 boolean defaultValue = false;
                 if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                     Log.d(TAG, "startScoUsingVirtualVoiceCall Adv Audio enabled");
+                     Log.d(TAG, "startScoUsingVirtualVoiceCall(): Adv Audio enabled");
                     CallAudioIntf mCallAudio = CallAudioIntf.get();
                     defaultValue = mCallAudio.startScoUsingVirtualVoiceCall();
                     receiver.send(defaultValue);
@@ -1111,7 +1154,7 @@ public class HeadsetService extends ProfileService {
             try {
                  boolean defaultValue = false;
                  if(ApmConstIntf.getQtiLeAudioEnabled()) {
-                      Log.d(TAG, "stopScoUsingVirtualVoiceCall Adv Audio enabled");
+                      Log.d(TAG, "stopScoUsingVirtualVoiceCall(): Adv Audio enabled");
                      CallAudioIntf mCallAudio = CallAudioIntf.get();
                      defaultValue = mCallAudio.stopScoUsingVirtualVoiceCall();
                      receiver.send(defaultValue);
@@ -1131,7 +1174,7 @@ public class HeadsetService extends ProfileService {
         public void phoneStateChanged(int numActive, int numHeld, int callState, String number,
             int type, String name, AttributionSource source) {
 
-            Log.d(TAG, "phoneStateChanged");
+            Log.d(TAG, "phoneStateChanged()");
             CallControlIntf mCallControl = CallControlIntf.get();
             if (mCallControl != null)
                 mCallControl.phoneStateChanged(numActive, numHeld, callState, number, type, name, false);
@@ -1144,7 +1187,7 @@ public class HeadsetService extends ProfileService {
         public void clccResponse(int index, int direction, int status, int mode, boolean mpty,
                 String number, int type, AttributionSource source,
                 SynchronousResultReceiver receiver) {
-            Log.d(TAG, "clccResponse");
+            Log.d(TAG, "clccResponse()");
             try {
               CallControlIntf mCallControl = CallControlIntf.get();
               if (mCallControl != null)

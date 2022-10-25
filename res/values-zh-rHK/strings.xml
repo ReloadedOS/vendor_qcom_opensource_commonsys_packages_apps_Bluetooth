@@ -130,6 +130,12 @@
     <string name="bluetooth_map_settings_app_icon" msgid="7105805610929114707">"應用程式圖示"</string>
     <string name="bluetooth_map_settings_title" msgid="7420332483392851321">"藍牙訊息分享設定"</string>
     <string name="bluetooth_map_settings_no_account_slots_left" msgid="1796029082612965251">"無法選取帳戶 (剩餘插槽數為 0)"</string>
+    <!-- MAP version upgrade / down grade -->
+    <string name="bluetooth_map_remote_advance_feature_support">支持消息访问高级功能</string>
+    <string name="bluetooth_map_remote_message_access_feature_downgrade">远程消息访问功能降级</string>
+    <string name="bluetooth_map_repair_for_adv_message_access_feature">重新配对高级消息访问功能</string>
+    <string name="bluetooth_map_repair_for_message_access_version_comp">重新配对消息访问版本兼容性</string>
+    <string name="bluetooth_map_notification_name">英国电信_地图_进步_支持</string>
     <string name="bluetooth_connected" msgid="6718623220072656906">"已與藍牙音訊連接"</string>
     <string name="bluetooth_disconnected" msgid="3318303728981478873">"已與藍牙音訊解除連接"</string>
     <string name="a2dp_sink_mbs_label" msgid="7566075853395412558">"藍牙音訊"</string>

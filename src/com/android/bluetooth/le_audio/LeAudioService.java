@@ -55,6 +55,7 @@ import android.sysprop.BluetoothProperties;
 import android.util.Log;
 import android.util.Pair;
 
+import com.android.bluetooth.CsipWrapper;
 import com.android.bluetooth.Utils;
 import com.android.bluetooth.btservice.AdapterService;
 import com.android.bluetooth.btservice.ProfileService;
@@ -1610,12 +1611,15 @@ public class LeAudioService extends ProfileService {
      * @return group id that this device currently belongs to
      */
     public int getGroupId(BluetoothDevice device) {
-        /*if (device == null) {
+        if (device == null) {
+            Log.d(TAG, "device is null");
             return LE_AUDIO_GROUP_ID_INVALID;
         }
-        return mDeviceGroupIdMap.getOrDefault(device, LE_AUDIO_GROUP_ID_INVALID);*/
-        //Below 1 is for testing purpose for ALS
-        return 1;
+        CsipWrapper csipWrapper = CsipWrapper.getInstance();
+        int setId = csipWrapper.getRemoteDeviceGroupId(device, null);
+
+        Log.d(TAG, "device: " + device + " groupId: " + setId);
+        return setId;
     }
 
     /**
