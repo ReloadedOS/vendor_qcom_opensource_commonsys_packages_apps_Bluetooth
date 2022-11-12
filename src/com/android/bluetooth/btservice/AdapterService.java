@@ -4761,7 +4761,17 @@ public class AdapterService extends Service {
                 if (mHeadsetService == null) {
                     Log.e(TAG, "getActiveDevices: HeadsetService is null");
                 } else {
-                    activeDevices.add(mHeadsetService.getActiveDevice());
+                    BluetoothDevice defaultValue = null;
+                    if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                        Log.i(TAG, "getQtiLeAudioEnabled() is true, get HFP active dev from APM");
+                        ActiveDeviceManagerServiceIntf activeDeviceManager =
+                                                  ActiveDeviceManagerServiceIntf.get();
+                        defaultValue = activeDeviceManager.
+                                  getActiveAbsoluteDevice(ApmConstIntf.AudioFeatures.CALL_AUDIO);
+                        activeDevices.add(defaultValue);
+                    } else {
+                        activeDevices.add(mHeadsetService.getActiveDevice());
+                    }
                     Log.i(TAG, "getActiveDevices: Headset device: " + activeDevices.get(0));
                 }
                 break;

@@ -39,13 +39,18 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import com.android.bluetooth.a2dp.A2dpService;
+
 import com.android.bluetooth.apm.ApmConstIntf;
 import com.android.bluetooth.apm.ActiveDeviceManagerServiceIntf;
+import com.android.bluetooth.apm.CallAudioIntf;
+
 import com.android.bluetooth.hearingaid.HearingAidService;
 import com.android.bluetooth.hfp.HeadsetService;
 import com.android.bluetooth.ba.BATService;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.bluetooth.le_audio.LeAudioService;
+import com.android.bluetooth.CsipWrapper;
+import com.android.bluetooth.Utils;
 
 import java.lang.reflect.*;
 
@@ -513,7 +518,56 @@ public class ActiveDeviceManager {
                                  + "Not setting active device null HFP");
                               } break;
                            }
+                        } else if (ApmConstIntf.getQtiLeAudioEnabled()) {
+                            int groupId = getGroupId(device);
+                            int activeGroupId = INVALID_SET_ID;
+                            BluetoothDevice peerHfpDevice = null;
+                            boolean isGrpDevice = false;
+
+                            if (hfpService == null) {
+                                    Log.e(TAG, "no headsetService, FATAL");
+                                    return;
+                            }
+
+                            if (mHfpActiveDevice != null &&
+                                mHfpActiveDevice.getAddress().contains(ApmConstIntf.groupAddress)) {
+                                byte[] addrByte = Utils.getByteAddress(mHfpActiveDevice);
+                                activeGroupId = addrByte[5];
+                            }
+
+                            Log.d(TAG, "groupId: " + groupId + ", activeGroupId: " + activeGroupId);
+
+                            if (groupId != INVALID_SET_ID && groupId == activeGroupId &&
+                                !mHfpConnectedDevices.isEmpty()) {
+                                for (BluetoothDevice peerDevice : mHfpConnectedDevices) {
+                                    if (getGroupId(peerDevice) == groupId) {
+                                        isGrpDevice = true;
+                                        peerHfpDevice = peerDevice;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            Log.d(TAG, "isGrpDevice: " + isGrpDevice + ", peerHfpDevice: " + peerHfpDevice);
+                            if (isGrpDevice) {
+                                CallAudioIntf mCallAudio = CallAudioIntf.get();
+                                 if (peerHfpDevice != null && mCallAudio != null &&
+                                     mCallAudio.getConnectionState(peerHfpDevice)
+                                                       == BluetoothProfile.STATE_CONNECTED) {
+                                   Log.d(TAG, "calling set Active dev: " + peerHfpDevice);
+                                   if (!setHfpActiveDevice(peerHfpDevice)) {
+                                       Log.w(TAG, "Set hfp active device failed");
+                                       setHfpActiveDevice(null);
+                                   }
+                                } else {
+                                   Log.d(TAG, "No Active device Switch" +
+                                          "as there is no Connected hfp peer");
+                                   setHfpActiveDevice(null);
+                                }
+                                break;
+                            }
                         }
+
                         if (Objects.equals(mHfpActiveDevice, device)) {
                             if (mAdapterService.isTwsPlusDevice(device) &&
                                 !mHfpConnectedDevices.isEmpty()) {
@@ -855,6 +909,21 @@ public class ActiveDeviceManager {
 
         mHearingAidActiveDevice = null;
         mLeAudioActiveDevice = null;
+    }
+
+    private int getGroupId(BluetoothDevice device) {
+        int groupId = -1;
+        CsipWrapper csipWrapper = CsipWrapper.getInstance();
+        if (device != null) {
+            groupId = csipWrapper.getRemoteDeviceGroupId(device, null);
+        } else {
+            groupId = INVALID_SET_ID;
+        }
+
+        if (DBG) {
+            Log.d(TAG, "getGroupId for device: " + device + " groupId: " + groupId);
+        }
+        return groupId;
     }
 
     @VisibleForTesting

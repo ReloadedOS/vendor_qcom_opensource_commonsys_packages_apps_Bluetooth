@@ -43,6 +43,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 //import android.media.BluetoothProfileConnectionInfo;
+import android.bluetooth.BluetoothAdapter;
 
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -54,6 +55,7 @@ import android.os.RemoteException;
 import android.sysprop.BluetoothProperties;
 import android.util.Log;
 import android.util.Pair;
+import android.os.SystemProperties;
 
 import com.android.bluetooth.CsipWrapper;
 import com.android.bluetooth.Utils;
@@ -123,6 +125,13 @@ public class LeAudioService extends ProfileService {
      */
     private static final int BROADCAST_PROFILE_SONIFICATION = 0;
     private static final int BROADCAST_PROFILE_MEDIA = 1;
+
+    private static final String ACTION_LE_AUDIO_CONNECTION_TRIGGER =
+                        "android.bluetooth.action.LE_AUDIO_CONN_TRIGGER";
+
+    private static int mPtsMediaAndVoice = 0;
+    private static boolean mPtsTmapConfBandC = false;
+    private BluetoothAdapter mAdapter;
 
     private AdapterService mAdapterService;
     private DatabaseManager mDatabaseManager;
@@ -264,6 +273,21 @@ public class LeAudioService extends ProfileService {
         //mHandler.post(() ->
         //        mLeAudioNativeInterface.init(mLeAudioCodecConfig.getCodecConfigOffloading()));
 
+        mPtsTmapConfBandC =
+          SystemProperties.getBoolean("persist.vendor.btstack.pts_tmap_conf_B_and_C", false);
+
+        mPtsMediaAndVoice =
+                   SystemProperties.getInt("persist.vendor.service.bt.leaudio.VandM", 3);
+
+        Log.d(TAG, "start(): mPtsMediaAndVoice: " + mPtsMediaAndVoice +
+                   ", mPtsTmapConfBandC: " + mPtsTmapConfBandC);
+
+        if (mPtsMediaAndVoice == 2 && mPtsTmapConfBandC) {
+            filter = new IntentFilter();
+            filter.addAction(ACTION_LE_AUDIO_CONNECTION_TRIGGER);
+            registerReceiver(mLeAudioServiceReceiver, filter);
+        }
+
         return true;
     }
 
@@ -401,18 +425,23 @@ public class LeAudioService extends ProfileService {
         // Connect other devices from this group
         //connectSet(device);
 
-        //AcmServIntf mAcmService = AcmServIntf.get();
-        //mAcmService.connect(device);
-
         CallAudioIntf mCallAudio = CallAudioIntf.get();
         MediaAudioIntf mMediaAudio = MediaAudioIntf.get();
 
-        if (mMediaAudio != null) {
-            mMediaAudio.connect(device);
+        Log.d(TAG, "connect(): mPtsMediaAndVoice: " + mPtsMediaAndVoice +
+                   ", mPtsTmapConfBandC: " + mPtsTmapConfBandC);
+        if (!mPtsTmapConfBandC &&
+            (mPtsMediaAndVoice == 1 || mPtsMediaAndVoice == 3)) {
+            if (mMediaAudio != null) {
+                mMediaAudio.connect(device);
+            }
         }
 
-        if (mCallAudio != null) {
-            mCallAudio.connect(device);
+        if (!mPtsTmapConfBandC &&
+            (mPtsMediaAndVoice == 2 || mPtsMediaAndVoice == 3)) {
+            if (mCallAudio != null) {
+                mCallAudio.connect(device);
+            }
         }
 
         return true;
@@ -1507,6 +1536,47 @@ public class LeAudioService extends ProfileService {
             connectionStateChanged(device, fromState, toState);
         }
     }
+
+    private final BroadcastReceiver mLeAudioServiceReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            Log.d(TAG, "action: " + action);
+            if (action == null) {
+                Log.w(TAG, "mHeadsetReceiver, action is null");
+                return;
+            }
+
+            switch (action) {
+                case ACTION_LE_AUDIO_CONNECTION_TRIGGER: {
+
+                    String device1 = intent.getStringExtra("bd_add_1");
+                    Log.d(TAG, "device Intent address: " + device1);
+                    BluetoothDevice bddevice1 = null, bddevice2 = null;
+
+                    mAdapter = BluetoothAdapter.getDefaultAdapter();
+
+                    if (mAdapter != null) {
+                        bddevice1 = mAdapter.getRemoteDevice(device1);
+                    }
+
+                    Log.d(TAG, "bddevice1: " + bddevice1 + ", bddevice2: " + bddevice2);
+
+                    CallAudioIntf mCallAudio = CallAudioIntf.get();
+                    MediaAudioIntf mMediaAudio = MediaAudioIntf.get();
+                    Log.d(TAG, "connect(): mPtsMediaAndVoice: " + mPtsMediaAndVoice +
+                               ", mPtsTmapConfBandC: " + mPtsTmapConfBandC);
+
+                    if (mPtsTmapConfBandC && mPtsMediaAndVoice == 2) {
+                        if (mCallAudio != null) {
+                            mCallAudio.connect(bddevice1);
+                        }
+                    } break;
+                }
+            }
+        }
+    };
 
    /**
      * Check whether can connect to a peer device.

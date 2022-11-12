@@ -60,6 +60,9 @@ public class HeadsetA2dpSync {
     // Hash for storing the A2DP states
     private ConcurrentHashMap<BluetoothDevice, Integer> mA2dpConnState =
                             new ConcurrentHashMap<BluetoothDevice, Integer>();
+    // Hash for storing the BAP states
+    private ConcurrentHashMap<BluetoothDevice, Integer> mBapConnState =
+                            new ConcurrentHashMap<BluetoothDevice, Integer>();
 
     // internal variables.
     private int mA2dpSuspendTriggered;// to keep track if A2dp was supended by HFP.
@@ -114,6 +117,13 @@ public class HeadsetA2dpSync {
             if(value == A2DP_PLAYING) {
                 a2dpState = value;
                 Log.d(TAG," isA2dpPlaying returns = " + a2dpState);
+                return a2dpState;
+            }
+        }
+        for(Integer value: mBapConnState.values()) {
+            if(value == A2DP_PLAYING) {
+                a2dpState = value;
+                Log.d(TAG," isBapPlaying returns = " + a2dpState);
                 return a2dpState;
             }
         }
@@ -301,8 +311,30 @@ public class HeadsetA2dpSync {
 
         // if device is not there and  state=DISCONNECTED, bail out
         if(!mA2dpConnState.containsKey(device)) {
-            Log.e(TAG," Got PLay_UPdate without Connectoin Update, this shld not happen "+ device);
+            Log.e(TAG," Got PLay_UPdate without a2dp Connectoin Update, maybe LE-only device "+ device);
         }
+        if(ApmConstIntf.getQtiLeAudioEnabled() || ApmConstIntf.getAospLeaEnabled()) {
+            ActiveDeviceManagerServiceIntf mActiveDeviceManager =
+                    ActiveDeviceManagerServiceIntf.get();
+            int MediaProfile = mActiveDeviceManager.getActiveProfile(ApmConstIntf.AudioFeatures.MEDIA_AUDIO);
+            BluetoothDevice mMediaDevice = mActiveDeviceManager.getActiveDevice(ApmConstIntf.AudioFeatures.MEDIA_AUDIO);
+            Log.d(TAG," MediaProfile: " + MediaProfile + ", current active media device: " + mMediaDevice);
+            if(MediaProfile != ApmConstIntf.AudioProfiles.NONE && MediaProfile != ApmConstIntf.AudioProfiles.A2DP) {
+               if(mMediaDevice != null) {
+                   if(currState == BluetoothA2dp.STATE_PLAYING) {
+                       Log.d(TAG," BAP profile active only for MEDIA_AUDIO: " + device);
+                       mBapConnState.put(device, A2DP_PLAYING);
+                   } else if(currState == BluetoothA2dp.STATE_NOT_PLAYING) {
+                       Log.d(TAG," BAP profile NOT_PLAYING " + device);
+                       mBapConnState.put(device, A2DP_CONNECTED);
+                   }
+               } else if(mMediaDevice == null) {
+                   Log.d(TAG," The LE media device is null ");
+                   mBapConnState.remove(device);
+               }
+            }
+        }
+
         switch(currState) {
         case BluetoothA2dp.STATE_NOT_PLAYING:
             if (mA2dpConnState.containsKey(device)) {

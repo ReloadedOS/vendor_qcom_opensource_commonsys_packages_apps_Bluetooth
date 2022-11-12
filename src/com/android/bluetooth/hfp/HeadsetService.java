@@ -145,7 +145,7 @@ public class HeadsetService extends ProfileService {
     private static final int[] CONNECTING_CONNECTED_STATES =
             {BluetoothProfile.STATE_CONNECTING, BluetoothProfile.STATE_CONNECTED};
     private static final int[] AUDIO_DISCONNECTING_AND_AUDIO_CONNECTED_STATES =
-            {BluetoothHeadset.STATE_AUDIO_DISCONNECTING, BluetoothHeadset.STATE_AUDIO_CONNECTED};
+            {BluetoothHeadset.STATE_AUDIO_DISCONNECTING, BluetoothHeadset.STATE_AUDIO_CONNECTED, BluetoothHeadset.STATE_AUDIO_CONNECTING};
     private static final int DIALING_OUT_TIMEOUT_MS = 10000;
 
     private int mMaxHeadsetConnections = 1;
