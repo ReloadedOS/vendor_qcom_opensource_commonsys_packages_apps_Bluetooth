@@ -107,6 +107,7 @@ public class Config {
     private static Class mBCServiceClass = null;
     private static Class mBroadcastClass = null;
     private static Class mPCServiceClass = null;
+    private static Class mCsClientServiceClass = null;
     private static Class mCcServiceClass = null;
     private static ArrayList<Class> profiles = new ArrayList<>();
     private static boolean mIsA2dpSink, mIsBAEnabled, mIsSplitA2dpEnabled,
@@ -119,6 +120,8 @@ public class Config {
                 "com.android.bluetooth.broadcast.BroadcastService");
         mPCServiceClass = ReflectionUtils.getRequiredClass(
                 "com.android.bluetooth.pc.PCService");
+        mCsClientServiceClass = ReflectionUtils.getRequiredClass(
+                "com.android.bluetooth.csc.CsClientService");
         mCcServiceClass = ReflectionUtils.getRequiredClass(
                 "com.android.bluetooth.cc.CCService");
     }
@@ -187,7 +190,9 @@ public class Config {
                         R.bool.profile_supported_music_player_service,
                         (1L << BluetoothProfile.MCP_SERVER)),
                     new ProfileConfig(mCcServiceClass, R.bool.profile_supported_cc_server,
-                        (1L << BluetoothProfile.CC_SERVER))
+                        (1L << BluetoothProfile.CC_SERVER)),
+                    new ProfileConfig(mCsClientServiceClass, R.bool.profile_supported_csc,
+                        (1L << BluetoothProfile.CS_PROFILE))
             ));
 
     /* List of Broadcast Advance Audio Profiles */
@@ -298,6 +303,8 @@ public class Config {
                                     "persist.vendor.service.bt.adv_audio_mask", 0);
         boolean isCCEnabled = SystemProperties.getBoolean(
                                     "persist.vendor.service.bt.cc", true);
+        boolean isCSEnabled = SystemProperties.getBoolean(
+                                    "persist.vendor.service.bt.cs", false);
         setAdvAudioMaskFromHostAddOnBits();
 
         Log.d(TAG, "adv_audio_feature_mask = " + adv_audio_feature_mask);
@@ -336,7 +343,11 @@ public class Config {
                     isCCEnabled == false) {
                     Log.d(TAG," isCCEnabled = " + isCCEnabled);
                     continue;
-                } else if (supported && config.mClass != null) {
+                } else if (config.mClass.getSimpleName().equals("CsClientService") &&
+                    isCSEnabled == false) {
+                    continue;
+                }
+                else if (supported && config.mClass != null) {
                     Log.d(TAG, "Adding " + config.mClass.getSimpleName());
                     advAudioProfiles.add(config.mClass);
                 }
@@ -470,6 +481,23 @@ public class Config {
         }
         for (ProfileConfig config : commonAdvAudioProfiles) {
             if (config.mClass == profile) {
+                if (profile == LeAudioService.class) {
+                    // LeAudioService is shared by LE_AUDIO and LE_AUDIO_BROADCAST
+                    long mask = config.mMask;
+                    AdapterService adapterService = AdapterService.getAdapterService();
+                    if (adapterService != null) {
+                        if (adapterService.isLeAudioSupported() ==
+                                BluetoothStatusCodes.FEATURE_NOT_SUPPORTED) {
+                            mask &= ~(1L << BluetoothProfile.LE_AUDIO);
+                        }
+                        if (adapterService.isLeAudioBroadcastSourceSupported() ==
+                                BluetoothStatusCodes.FEATURE_NOT_SUPPORTED) {
+                            mask &= ~(1L << BluetoothProfile.LE_AUDIO_BROADCAST);
+                        }
+                    }
+                    Log.d(TAG, "LeAudioService profile mask: " + mask);
+                    return mask;
+                }
                 return config.mMask;
             }
         }
@@ -532,7 +560,7 @@ public class Config {
             return true;
         }
         if (serviceName.equals("LeAudioService") && (adapterService.isLeAudioSupported() ==
-                BluetoothStatusCodes.FEATURE_NOT_SUPPORTED ||
+                BluetoothStatusCodes.FEATURE_NOT_SUPPORTED &&
                 adapterService.isLeAudioBroadcastSourceSupported() ==
                 BluetoothStatusCodes.FEATURE_NOT_SUPPORTED)) {
             return false;

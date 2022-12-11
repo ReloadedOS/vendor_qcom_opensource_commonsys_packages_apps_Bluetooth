@@ -129,6 +129,9 @@ public class BluetoothPbapService extends ProfileService implements IObexConnect
 
     public static final boolean VERBOSE = Log.isLoggable(LOG_TAG, Log.VERBOSE);
 
+    private static final String PBAP_ACTIVITY
+            = BluetoothPbapActivity.class.getCanonicalName();
+
     /**
      * Intent indicating incoming obex authentication request which is from
      * PCE(Carkit)
@@ -639,7 +642,7 @@ public class BluetoothPbapService extends ProfileService implements IObexConnect
         }
         mDatabaseManager = Objects.requireNonNull(AdapterService.getAdapterService().getDatabase(),
             "DatabaseManager cannot be null when PbapService starts");
-
+        setComponentAvailable(PBAP_ACTIVITY, true);
         mContext = this;
         mContactsLoaded = false;
         mHandlerThread = new HandlerThread("PbapHandlerThread");
@@ -691,6 +694,7 @@ public class BluetoothPbapService extends ProfileService implements IObexConnect
         unregisterReceiver(mPbapReceiver);
         getContentResolver().unregisterContentObserver(mContactChangeObserver);
         mContactChangeObserver = null;
+        setComponentAvailable(PBAP_ACTIVITY, false);
         return true;
     }
 

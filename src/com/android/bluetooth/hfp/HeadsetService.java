@@ -549,7 +549,7 @@ public class HeadsetService extends ProfileService {
                     int streamType = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1);
                     if (streamType == AudioManager.STREAM_BLUETOOTH_SCO) {
                         AdapterService adapterService = AdapterService.getAdapterService();
-                        if(!adapterService.isAdvUnicastAudioFeatEnabled()) {
+                        if(!ApmConstIntf.getQtiLeAudioEnabled()) {
                             setIntentScoVolume(intent);
                         }
                     }

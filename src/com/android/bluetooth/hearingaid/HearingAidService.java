@@ -113,7 +113,8 @@ public class HearingAidService extends ProfileService {
             Log.d(TAG, "start()");
         }
         if (sHearingAidService != null) {
-            throw new IllegalStateException("start() called twice");
+            Log.w(TAG, "HearingAidService is already running");
+            return true;
         }
 
         synchronized (mVariableLock) {

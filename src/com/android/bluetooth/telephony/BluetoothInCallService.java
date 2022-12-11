@@ -1011,7 +1011,8 @@ public class BluetoothInCallService extends InCallService {
                 heldCall.unhold();
                 return true;
             } else if (!mCallInfo.isNullCall(activeCall)
-                    && activeCall.can(Connection.CAPABILITY_HOLD)) {
+                    && (activeCall.can(Connection.CAPABILITY_HOLD)
+                    ||  activeCall.can(Connection.CAPABILITY_SUPPORT_HOLD))) {
                 activeCall.hold();
                 return true;
             }
