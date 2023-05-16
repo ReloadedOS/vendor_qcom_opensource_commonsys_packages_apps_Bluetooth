@@ -44,7 +44,6 @@ import com.android.bluetooth.a2dp.A2dpService;
 import com.android.bluetooth.apm.ApmConstIntf;
 import com.android.bluetooth.apm.ActiveDeviceManagerServiceIntf;
 import com.android.bluetooth.apm.CallAudioIntf;
-import com.android.bluetooth.cc.CCService;
 
 import com.android.bluetooth.hearingaid.HearingAidService;
 import com.android.bluetooth.hfp.HeadsetService;
@@ -780,10 +779,6 @@ public class ActiveDeviceManager {
                         broadcastLeActiveDeviceChange(AbsDevice);
                         onLeActiveDeviceChange(AbsDevice);
                         mLeAudioActiveDevice = AbsDevice;
-                        CCService ccService = CCService.getCCService();
-                        if (ccService != null) {
-                            ccService.handleAnswerCall(AbsDevice);
-                        }
                     }
                 }
             }
