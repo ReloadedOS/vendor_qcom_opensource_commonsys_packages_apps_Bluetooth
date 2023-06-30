@@ -467,10 +467,23 @@ public class BluetoothInCallService extends InCallService {
                 }
             }
             if (state == -1) {
-                Log.e(TAG, "no such call with Index");
-                return false;
+                call = mCallInfo.getForegroundCall();
+                if (mCallInfo.isNullCall(call)) {
+                    Log.e(TAG, "no call with Index");
+                    return false;
+                }
+                // release the parent if there is a conference call
+                BluetoothCall conferenceCall = getBluetoothCallById(call.getParentId());
+                if (!mCallInfo.isNullCall(conferenceCall)
+                       && conferenceCall.getState() == Call.STATE_ACTIVE) {
+                    Log.i(TAG, "BT - hanging up conference call");
+                    call = conferenceCall;
+                } else {
+                    Log.e(TAG, "no conference call active");
+                    return false;
+                }
             }
-           if (call.getState() == Call.STATE_RINGING) {
+            if (call.getState() == Call.STATE_RINGING) {
                 call.reject(false, "");
             } else {
                 call.disconnect();
@@ -584,6 +597,10 @@ public class BluetoothInCallService extends InCallService {
 
     @RequiresPermission(android.Manifest.permission.MODIFY_PHONE_STATE)
     public boolean queryPhoneState() {
+        if (mServiceCreated == false) {
+             Log.w(TAG, "queryPhoneState is called when service is not created");
+             return false;
+        }
         Intent DsdaIntent = new Intent(ACTION_DSDA_CALL_STATE_CHANGE);
         DsdaIntent.putExtra("state", QUERY_PHONE_STATE);
         sendBroadcastAsUser(DsdaIntent, UserHandle.ALL);

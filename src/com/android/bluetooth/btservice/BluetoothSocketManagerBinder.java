@@ -17,6 +17,7 @@
 package com.android.bluetooth.btservice;
 
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.bluetooth.IBluetoothSocketManager;
 import android.os.Binder;
 import android.os.ParcelFileDescriptor;
@@ -48,8 +49,12 @@ class BluetoothSocketManagerBinder extends IBluetoothSocketManager.Stub {
             return null;
         }
 
-        return marshalFd(mService.connectSocketNative(
-            Utils.getBytesFromAddress(device.getAddress()),
+        return marshalFd(
+                mService.connectSocketNative(
+                        Utils.getBytesFromAddress(
+                                type == BluetoothSocket.TYPE_L2CAP_LE
+                                        ? device.getAddress()
+                                        : mService.getIdentityAddress(device.getAddress())),
             type,
             Utils.uuidToByteArray(uuid),
             port,

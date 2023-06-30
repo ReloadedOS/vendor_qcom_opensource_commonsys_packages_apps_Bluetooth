@@ -63,14 +63,14 @@ public class MediaControlManagerIntf {
 
     }
 
-    public static MediaControlManagerIntf get() {
+    public static synchronized MediaControlManagerIntf get() {
         if(mInterface == null) {
             mInterface = new MediaControlManagerIntf();
         }
         return mInterface;
     }
 
-    protected static void init (Object obj) {
+    protected static synchronized void init (Object obj) {
         Log.i(TAG, "init");
 
         if(mInterface == null) {
@@ -114,7 +114,7 @@ public class MediaControlManagerIntf {
     }
 
     public void onMetadataChanged(MediaMetadata metadata) {
-        if(MediaControlManager == null)
+        if(MediaControlManager == null || onMetadataChanged == null)
             return;
 
         try {
@@ -127,7 +127,7 @@ public class MediaControlManagerIntf {
     }
 
     public void onPlaybackStateChanged(PlaybackState state) {
-        if(MediaControlManager == null)
+        if(MediaControlManager == null || onPlaybackStateChanged == null)
             return;
 
         try {
@@ -140,7 +140,7 @@ public class MediaControlManagerIntf {
     }
 
     public void onQueueChanged(List<MediaSession.QueueItem> queue) {
-        if(MediaControlManager == null)
+        if(MediaControlManager == null || onQueueChanged == null)
             return;
 
         try {
@@ -153,7 +153,7 @@ public class MediaControlManagerIntf {
     }
 
     public void onPackageChanged(String packageName) {
-        if(MediaControlManager == null)
+        if(MediaControlManager == null || onPackageChanged == null)
             return;
 
         try {
@@ -166,7 +166,7 @@ public class MediaControlManagerIntf {
     }
 
     public void onSessionDestroyed(String packageName) {
-        if(MediaControlManager == null)
+        if(MediaControlManager == null || onSessionDestroyed == null)
             return;
 
         try {

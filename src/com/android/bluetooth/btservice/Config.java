@@ -297,9 +297,10 @@ public class Config {
             }
         }
         sSupportedProfiles = profiles.toArray(new Class[profiles.size()]);
+        initAdvAudioSupport(ctx, false);
     }
 
-    static void initAdvAudioSupport(Context ctx) {
+    static void initAdvAudioSupport(Context ctx, boolean setHostAddonBit) {
         if (ctx == null || !isAdvAudioAvailable()) {
             Log.w(TAG, "Context is null or advance audio features are unavailable");
             return;
@@ -316,7 +317,8 @@ public class Config {
                                     "persist.vendor.service.bt.cc", true);
         boolean isCSEnabled = SystemProperties.getBoolean(
                                     "persist.vendor.service.bt.cs", false);
-        setAdvAudioMaskFromHostAddOnBits();
+        if (setHostAddonBit)
+            setAdvAudioMaskFromHostAddOnBits();
 
         Log.d(TAG, "adv_audio_feature_mask = " + adv_audio_feature_mask);
         ArrayList<Class> advAudioProfiles = new ArrayList<>();
@@ -501,7 +503,7 @@ public class Config {
                                 BluetoothStatusCodes.FEATURE_NOT_SUPPORTED) {
                             mask &= ~(1L << BluetoothProfile.LE_AUDIO);
                         }
-                        if (adapterService.isLeAudioBroadcastSourceSupported() ==
+                        if (adapterService.isLeAudioBroadcastSourcePropertySet() ==
                                 BluetoothStatusCodes.FEATURE_NOT_SUPPORTED) {
                             mask &= ~(1L << BluetoothProfile.LE_AUDIO_BROADCAST);
                         }
@@ -531,6 +533,7 @@ public class Config {
         for (final Class profileClass : getSupportedProfiles()) {
             mask |= getProfileMask(profileClass);
         }
+        Log.d(TAG, "getSupportedProfilesBitMask: " + mask);
         return mask;
     }
 
@@ -572,7 +575,7 @@ public class Config {
         }
         if (serviceName.equals("LeAudioService") && (adapterService.isLeAudioSupported() ==
                 BluetoothStatusCodes.FEATURE_NOT_SUPPORTED &&
-                adapterService.isLeAudioBroadcastSourceSupported() ==
+                adapterService.isLeAudioBroadcastSourcePropertySet() ==
                 BluetoothStatusCodes.FEATURE_NOT_SUPPORTED)) {
             return false;
         }

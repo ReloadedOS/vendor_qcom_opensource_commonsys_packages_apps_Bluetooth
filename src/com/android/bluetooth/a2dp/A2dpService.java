@@ -1149,6 +1149,7 @@ public class A2dpService extends ProfileService {
                 // new active device so that Audio Service
                 // can reset accordingly the audio feeding parameters
                 // in the Audio HAL to the Bluetooth stack.
+                Log.d(TAG," setActiveDeviceInternal: Notify active device change to MM audio ");
                 mAudioManager.handleBluetoothActiveDeviceChanged(device,
                   previousActiveDevice, BluetoothProfileConnectionInfo.createA2dpInfo(true,
                                                                rememberedVolume));
@@ -1946,12 +1947,19 @@ public class A2dpService extends ProfileService {
         // parameters in the Audio HAL to the Bluetooth stack.
         int rememberedVolume = -1;
         if (isActiveDevice(device) && !sameAudioFeedingParameters) {
+            Log.w(TAG, "codecConfigUpdated: device is active");
             synchronized (mBtAvrcpLock) {
                 if (mAvrcp_ext != null)
                     rememberedVolume = mAvrcp_ext.getVolume(device);
             }
             synchronized (mAudioManagerLock) {
                 if (mAudioManager != null) {
+                    try {
+                        Thread.sleep(40);
+                    } catch (Exception e) {
+                        Log.d(TAG, "codecConfigUpdated: Exception for Thread.sleep()");
+                    }
+                    Log.d(TAG," codecConfigUpdated: Notify codec config change to MM audio ");
                     mAudioManager.handleBluetoothActiveDeviceChanged(device, device,
                         BluetoothProfileConnectionInfo.createA2dpInfo(false, -1));
                 }

@@ -3159,6 +3159,14 @@ public class HeadsetStateMachine extends StateMachine {
         return matched;
     }
 
+    boolean isDeviceBlacklistedForDelayingCLCCRespAfterVOIPCall() {
+        boolean matched = InteropUtil.interopMatchAddrOrName(
+            InteropUtil.InteropFeature.INTEROP_HFP_SEND_OK_FOR_CLCC_AFTER_VOIP_CALL_END,
+            mDevice.getAddress());
+
+        return matched;
+    }
+
     private void sendVoipConnectivityNetworktype(boolean isVoipStarted) {
         Log.d(TAG, "Enter sendVoipConnectivityNetworktype()");
         Network network = mConnectivityManager.getActiveNetwork();

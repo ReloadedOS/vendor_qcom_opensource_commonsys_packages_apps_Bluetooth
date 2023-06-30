@@ -32,6 +32,7 @@ import com.android.bluetooth.btservice.AdapterService;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.NoSuchElementException;
 import java.util.Iterator;
 import java.util.Map;
@@ -48,7 +49,7 @@ class AdvertiseManager {
     private final GattService mService;
     private final AdapterService mAdapterService;
     private Handler mHandler;
-    Map<IBinder, AdvertiserInfo> mAdvertisers = Collections.synchronizedMap(new HashMap<>());
+    Map<IBinder, AdvertiserInfo> mAdvertisers = new ConcurrentHashMap<>();
     static int sTempRegistrationId = -1;
 
     /**

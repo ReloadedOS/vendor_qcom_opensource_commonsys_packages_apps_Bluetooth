@@ -105,6 +105,7 @@ import static com.android.bluetooth.Utils.enforceDumpPermission;
 import static com.android.bluetooth.Utils.enforceLocalMacAddressPermission;
 import static com.android.bluetooth.Utils.hasBluetoothPrivilegedPermission;
 import static com.android.bluetooth.Utils.isPackageNameAccurate;
+import static com.android.bluetooth.Utils.getAnonymizedUuid;
 
 import android.annotation.NonNull;
 import android.annotation.RequiresPermission;
@@ -128,6 +129,7 @@ import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothProtoEnums;
 import android.bluetooth.BluetoothSap;
 import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSinkAudioPolicy;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothStatusCodes;
 import android.bluetooth.BluetoothUuid;
@@ -933,7 +935,7 @@ public class AdapterService extends Service {
 
     void startProfileServices() {
         debugLog("startCoreServices()");
-        Config.initAdvAudioSupport(getApplicationContext());
+        Config.initAdvAudioSupport(getApplicationContext(), true);
         Class[] supportedProfileServices = Config.getSupportedProfiles();
         if (supportedProfileServices.length == 1 && GattService.class.getSimpleName()
                 .equals(supportedProfileServices[0].getSimpleName())) {
@@ -1793,6 +1795,15 @@ public class AdapterService extends Service {
         return BluetoothStatusCodes.FEATURE_NOT_SUPPORTED;
     }
 
+    public int isLeAudioBroadcastSourcePropertySet() {
+        if (BluetoothProperties.isProfileBapBroadcastSourceEnabled().orElse(false)) {
+            Log.e(TAG, "isLeAudioBroadcastSourceSupported: supported");
+            return BluetoothStatusCodes.FEATURE_SUPPORTED;
+        }
+        Log.e(TAG, "isLeAudioBroadcastSourceSupported: not supported");
+        return BluetoothStatusCodes.FEATURE_NOT_SUPPORTED;
+    }
+
     public int isLeAudioBroadcastSourceSupported() {
         if (BluetoothProperties.isProfileBapBroadcastSourceEnabled().orElse(false)
                 && mAdapterProperties.isLePeriodicAdvertisingSupported()
@@ -1842,7 +1853,8 @@ public class AdapterService extends Service {
         synchronized (mBluetoothServerSockets) {
             if (mBluetoothServerSockets.containsKey(uuid.getUuid())) {
                 Log.d(TAG, String.format(
-                        "Cannot start RFCOMM listener: UUID %s already in use.", uuid.getUuid()));
+                        "Cannot start RFCOMM listener: UUID %s already in use.",
+                        getAnonymizedUuid(uuid.toString())));
                 return BluetoothStatusCodes.RFCOMM_LISTENER_START_FAILED_UUID_IN_USE;
             }
         }
@@ -1864,7 +1876,8 @@ public class AdapterService extends Service {
 
             if (listenerData == null) {
                 Log.d(TAG, String.format(
-                        "Cannot stop RFCOMM listener: UUID %s is not registered.", uuid.getUuid()));
+                        "Cannot stop RFCOMM listener: UUID %s is not registered.",
+                        getAnonymizedUuid(uuid.toString())));
                 return BluetoothStatusCodes.RFCOMM_LISTENER_OPERATION_FAILED_NO_MATCHING_SERVICE_RECORD;
             }
 
@@ -4101,6 +4114,21 @@ public class AdapterService extends Service {
         }
 
         @Override
+        public void isRequestAudioPolicyAsSinkSupported(BluetoothDevice device,
+                AttributionSource source, SynchronousResultReceiver receiver) {
+        }
+
+        @Override
+        public void requestAudioPolicyAsSink(BluetoothDevice device, BluetoothSinkAudioPolicy policies,
+                AttributionSource source, SynchronousResultReceiver receiver) {
+        }
+
+        @Override
+        public void getRequestedAudioPolicyAsSink(BluetoothDevice device,
+                AttributionSource source, SynchronousResultReceiver receiver) {
+        }
+
+        @Override
         public void requestActivityInfo(IBluetoothActivityEnergyInfoListener listener,
                     AttributionSource source) {
             BluetoothActivityEnergyInfo info = reportActivityInfo(source);
@@ -4731,6 +4759,30 @@ public class AdapterService extends Service {
         return getConnectionStateNative(addr);
     }
 
+    public boolean handleLeSetActiveDevice(BluetoothDevice device) {
+        boolean isAospLeaEnabled = ApmConstIntf.getAospLeaEnabled();
+        boolean isLeActiveDevice = false;
+        Log.i(TAG, "handleLeSetActiveDevice: isAospLeaEnabled: "
+                              + isAospLeaEnabled + ", device: " + device);
+        for (BluetoothDevice dev : getActiveDevices(BluetoothProfile.LE_AUDIO)) {
+            if (dev != null) {
+                Log.i(TAG, "handleLeSetActiveDevice: LE audio device is active");
+                isLeActiveDevice = true;
+                break;
+            }
+        }
+
+        if (isAospLeaEnabled &&
+            mLeAudioService != null && (device == null && isLeActiveDevice
+                || mLeAudioService.getConnectionPolicy(device)
+                == BluetoothProfile.CONNECTION_POLICY_ALLOWED)) {
+            Log.i(TAG, "handleLeSetActiveDevice: Setting active Le Audio device " + device);
+            mLeAudioService.setActiveDeviceBlocking(device);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Sets device as the active devices for the profiles passed into the function
      *
@@ -4769,22 +4821,10 @@ public class AdapterService extends Service {
                 return false;
         }
 
-        boolean isLeAudioDeviceActive = false;
-        for (BluetoothDevice dev : getActiveDevices(BluetoothProfile.LE_AUDIO)) {
-            if (dev != null) {
-                Log.i(TAG, "setActiveDevice: LE audio device is active");
-                isLeAudioDeviceActive = true;
-                break;
-            }
-        }
-
-        //Make only Le-A device setactive when qti LE-A not enabled.
-        if (!isQtiLeAudioEnabled &&
-            mLeAudioService != null && (device == null && isLeAudioDeviceActive
-                || mLeAudioService.getConnectionPolicy(device)
-                == BluetoothProfile.CONNECTION_POLICY_ALLOWED)) {
-            Log.i(TAG, "setActiveDevice: Setting active Le Audio device " + device);
-            mLeAudioService.setActiveDevice(device);
+        boolean isLeActiveDeviceHandled = false;
+        isLeActiveDeviceHandled = handleLeSetActiveDevice(device);
+        if (isLeActiveDeviceHandled) {
+            Log.i(TAG, "setActiveDevice: LE audio device made active");
             return true;
         }
 
@@ -4805,13 +4845,17 @@ public class AdapterService extends Service {
         }
 
         if (setHeadset && mHeadsetService != null) {
-            if(isQtiLeAudioEnabled || isAospLeaEnabled) {
-                activeDeviceManager.setActiveDevice(device,
-                        ApmConstIntf.AudioFeatures.CALL_AUDIO, true);
+            if (isQtiLeAudioEnabled || isAospLeaEnabled) {
+                activeDeviceManager.setActiveDeviceBlocking(device,
+                                     ApmConstIntf.AudioFeatures.CALL_AUDIO);
             } else {
                 Log.i(TAG, "setActiveDevice: Setting active Headset " + device);
                 mHeadsetService.setActiveDevice(device);
             }
+        }
+
+        if (device == null) {
+            handleLeSetActiveDevice(device);
         }
 
         return true;
@@ -4860,8 +4904,9 @@ public class AdapterService extends Service {
                         Log.i(TAG, "getQtiLeAudioEnabled() is true, get A2DP active dev from APM");
                         ActiveDeviceManagerServiceIntf activeDeviceManager =
                                                    ActiveDeviceManagerServiceIntf.get();
+                        Log.i(TAG, "getActiveAbsoluteDevice for Media from APM");
                         defaultValue = activeDeviceManager.
-                                  getActiveDevice(ApmConstIntf.AudioFeatures.MEDIA_AUDIO);
+                                   getActiveAbsoluteDevice(ApmConstIntf.AudioFeatures.MEDIA_AUDIO);
                         activeDevices.add(defaultValue);
                     } else {
                         activeDevices.add(mA2dpService.getActiveDevice());

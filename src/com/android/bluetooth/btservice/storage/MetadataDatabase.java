@@ -16,7 +16,7 @@
 
 /*
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -68,7 +68,7 @@ import java.util.List;
 /**
  * MetadataDatabase is a Room database stores Bluetooth persistence data
  */
-@Database(entities = {Metadata.class}, version = 113)
+@Database(entities = {Metadata.class}, version = 114)
 public abstract class MetadataDatabase extends RoomDatabase {
     /**
      * The metadata database file name
@@ -101,6 +101,7 @@ public abstract class MetadataDatabase extends RoomDatabase {
                 .addMigrations(MIGRATION_110_111)
                 .addMigrations(MIGRATION_111_112)
                 .addMigrations(MIGRATION_112_113)
+                .addMigrations(MIGRATION_113_114)
                 .allowMainThreadQueries()
                 .build();
     }
@@ -507,6 +508,23 @@ public abstract class MetadataDatabase extends RoomDatabase {
         public void migrate(SupportSQLiteDatabase database) {
             try {
                 database.execSQL("ALTER TABLE metadata ADD COLUMN `is_active_le_audio_device` "
+                        + "INTEGER NOT NULL DEFAULT 0");
+            } catch (SQLException ex) {
+                // Check if user has new schema, but is just missing the version update
+                Cursor cursor = database.query("SELECT * FROM metadata");
+                if (cursor == null || cursor.getColumnIndex("is_active_le_audio_device") == -1) {
+                    throw ex;
+                }
+            }
+        }
+    };
+
+    @VisibleForTesting
+    static final Migration MIGRATION_113_114 = new Migration(113, 114) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            try {
+                database.execSQL("ALTER TABLE metadata ADD COLUMN `is_aar4_enabled` "
                         + "INTEGER NOT NULL DEFAULT 0");
             } catch (SQLException ex) {
                 // Check if user has new schema, but is just missing the version update

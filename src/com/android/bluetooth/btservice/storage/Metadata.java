@@ -16,7 +16,7 @@
 
 /*
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -88,6 +88,7 @@ class Metadata {
     public boolean was_previously_connected_to_bc;
     public boolean device_supports_bc_profile;
     public boolean is_active_le_audio_device;
+    public boolean is_aar4_enabled;
 
     Metadata(String address) {
         this.address = address;
@@ -103,6 +104,7 @@ class Metadata {
         is_active_le_audio_device = true;
         was_previously_connected_to_bc = false;
         device_supports_bc_profile = false;
+	is_aar4_enabled = true;
     }
 
     String getAddress() {

@@ -981,4 +981,16 @@ public final class Utils {
         }
         return false;
     }
+
+    /**
+    * Convert an UUID to an obfuscate one for logging purpose
+    * @param UUID to be log
+    * @return Loggable UUID
+    */
+    public static String getAnonymizedUuid(String uuid) {
+        if (uuid == null || uuid.length() != 36) {
+            return uuid;
+        }
+        return "XXXXXXXX" + uuid.substring(8);
+    }
 }

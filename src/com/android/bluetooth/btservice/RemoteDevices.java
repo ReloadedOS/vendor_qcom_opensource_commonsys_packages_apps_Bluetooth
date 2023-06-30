@@ -612,6 +612,14 @@ final class RemoteDevices {
                 return mSdpProgress;
             }
         }
+
+        void setDefaultAdvAudioProp() {
+          synchronized (mObject) {
+            this.mAdvAudioUpdateProp = true;
+            debugLog("Default AdvAudioProp for uuid " +this.mAdvAudioUpdateProp);
+          }
+        }
+
     }
 
     private void sendUuidIntent(BluetoothDevice device, DeviceProperties prop) {

@@ -16,7 +16,7 @@
 
 /*
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -388,6 +388,54 @@ public class DatabaseManager {
             data.setProfileConnectionPolicy(profile, newConnectionPolicy);
             updateDatabase(data);
             return true;
+        }
+    }
+
+    public boolean getAAR4Status(BluetoothDevice device){
+        synchronized (mMetadataCache) {
+            if (device == null) {
+                Log.e(TAG, "getAAR4Status: device is null");
+                return false;
+            }
+
+            String address = device.getAddress();
+
+            if (!mMetadataCache.containsKey(address)) {
+                Metadata data = new Metadata(address);
+                mMetadataCache.put(address, data);
+                updateDatabase(data);
+                Log.d(TAG, "getAAR4Status: device " + address + " is not in cache, default true");
+            }
+
+            Metadata data = mMetadataCache.get(address);
+            boolean status = data.is_aar4_enabled;
+
+            Log.v(TAG, "getAAR4Status: " + status);
+            return status;
+        }
+    }
+
+    public void setAAR4Status(BluetoothDevice device, boolean status){
+        synchronized (mMetadataCache) {
+            if (device == null) {
+                Log.e(TAG, "setAAR4Status: device is null");
+		return;
+            }
+
+            String address = device.getAddress();
+
+            if (!mMetadataCache.containsKey(address)) {
+                Log.d(TAG, "setAAR4Status: device " + address + " is not in cache");
+                Metadata data = new Metadata(address);
+                data.is_aar4_enabled = status;
+                mMetadataCache.put(address, data);
+                updateDatabase(data);
+            } else {
+                Metadata data = mMetadataCache.get(address);
+                data.is_aar4_enabled = status;
+                updateDatabase(data);
+	    }
+            Log.v(TAG, "setAAR4Status: " + status);
         }
     }
 

@@ -431,10 +431,10 @@ final class AdapterState extends StateMachine {
                     mAdapterService.StartHCIClose();
                     errorLog("BREDR_START_TIMEOUT is going to kill the process as part of cleanup");
                     sendMessageDelayed(BT_FORCEKILL_TIMEOUT, BT_FORCEKILL_TIMEOUT_DELAY);
+                    transitionTo(mOffState);
                     break;
 
                 case BT_FORCEKILL_TIMEOUT:
-                    transitionTo(mOffState);
                     errorLog("Killing the process to force a restart as part of cleanup");
                     android.os.Process.killProcess(android.os.Process.myPid());
                     break;
