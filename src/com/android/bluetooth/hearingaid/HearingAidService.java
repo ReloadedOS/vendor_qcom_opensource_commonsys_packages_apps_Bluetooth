@@ -890,16 +890,17 @@ public class HearingAidService extends ProfileService {
             mHiSyncIdConnectedMap.put(myHiSyncId, false);
         }
         // Check if the device is disconnected - if unbond, remove the state machine
-        synchronized (mVariableLock) {
-            if (toState == BluetoothProfile.STATE_DISCONNECTED) {
-                int bondState = mAdapterService.getBondState(device);
-                if (bondState == BluetoothDevice.BOND_NONE) {
-                    if (DBG) {
-                        Log.d(TAG, device + " is unbond. Remove state machine");
-                    }
-                    removeStateMachine(device);
-                }
-            }
+        int bondState = BluetoothDevice.BOND_NONE;
+        if (toState == BluetoothProfile.STATE_DISCONNECTED) {
+           synchronized (mVariableLock) {
+              bondState = mAdapterService.getBondState(device);
+           }
+           if (bondState == BluetoothDevice.BOND_NONE) {
+              if (DBG) {
+                 Log.d(TAG, device + " is unbond. Remove state machine");
+              }
+              removeStateMachine(device);
+           }
         }
     }
 

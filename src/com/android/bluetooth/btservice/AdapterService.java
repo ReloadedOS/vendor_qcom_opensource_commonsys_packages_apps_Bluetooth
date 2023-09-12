@@ -4777,7 +4777,7 @@ public class AdapterService extends Service {
                 || mLeAudioService.getConnectionPolicy(device)
                 == BluetoothProfile.CONNECTION_POLICY_ALLOWED)) {
             Log.i(TAG, "handleLeSetActiveDevice: Setting active Le Audio device " + device);
-            mLeAudioService.setActiveDeviceBlocking(device);
+            mLeAudioService.setActiveDevice(device);
             return true;
         }
         return false;
@@ -4846,8 +4846,8 @@ public class AdapterService extends Service {
 
         if (setHeadset && mHeadsetService != null) {
             if (isQtiLeAudioEnabled || isAospLeaEnabled) {
-                activeDeviceManager.setActiveDeviceBlocking(device,
-                                     ApmConstIntf.AudioFeatures.CALL_AUDIO);
+                activeDeviceManager.setActiveDevice(device,
+                                     ApmConstIntf.AudioFeatures.CALL_AUDIO, false);
             } else {
                 Log.i(TAG, "setActiveDevice: Setting active Headset " + device);
                 mHeadsetService.setActiveDevice(device);

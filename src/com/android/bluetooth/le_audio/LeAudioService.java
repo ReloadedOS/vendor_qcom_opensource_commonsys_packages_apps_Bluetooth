@@ -452,18 +452,23 @@ public class LeAudioService extends ProfileService {
 
         Log.d(TAG, "connect(): mPtsMediaAndVoice: " + mPtsMediaAndVoice +
                    ", mPtsTmapConfBandC: " + mPtsTmapConfBandC);
-
         if (!mPtsTmapConfBandC &&
-            (mPtsMediaAndVoice == 2 || mPtsMediaAndVoice == 3)) {
-            if (mCallAudio != null) {
-                mCallAudio.connect(device);
+            (mPtsMediaAndVoice == 1 || mPtsMediaAndVoice == 3)) {
+            if (mMediaAudio != null) {
+                if (mPtsMediaAndVoice == 3)
+                  mMediaAudio.connect(device, true);
+                else
+                  mMediaAudio.connect(device);
             }
         }
 
         if (!mPtsTmapConfBandC &&
-            (mPtsMediaAndVoice == 1 || mPtsMediaAndVoice == 3)) {
-            if (mMediaAudio != null) {
-                mMediaAudio.connect(device);
+            mPtsMediaAndVoice == 2) {
+            if (mCallAudio != null) {
+                Log.d(TAG, "connect(): Connecting call AUdio");
+                mCallAudio.connect(device);
+            } else {
+                Log.d(TAG, "call AUdio is null");
             }
         }
 
@@ -1194,19 +1199,32 @@ public class LeAudioService extends ProfileService {
                    ", VoiceProfID:" + VoiceProfID);
 
         mPreviousActiveDevice = device;
+        CallAudioIntf mCallAudio = CallAudioIntf.get();
+        boolean isInCall =
+                mCallAudio != null && mCallAudio.isVoiceOrCallActive();
 
         ActiveDeviceManagerServiceIntf activeDeviceManager =
                                             ActiveDeviceManagerServiceIntf.get();
         if (((ApmConst.AudioProfiles.BAP_CALL & VoiceProfID) ==
                                           ApmConst.AudioProfiles.BAP_CALL)) {
-            activeDeviceManager.setActiveDevice(device,
-                                            ApmConstIntf.AudioFeatures.CALL_AUDIO);
+            if (isInCall) {
+                activeDeviceManager.setActiveDeviceBlocking(device,
+                                                ApmConstIntf.AudioFeatures.CALL_AUDIO);
+            } else {
+                activeDeviceManager.setActiveDevice(device,
+                                             ApmConstIntf.AudioFeatures.CALL_AUDIO);
+            }
         }
 
         if (((ApmConst.AudioProfiles.BAP_MEDIA & MediaProfID) ==
                                          ApmConst.AudioProfiles.BAP_MEDIA)) {
-            activeDeviceManager.setActiveDevice(device,
-                                            ApmConstIntf.AudioFeatures.MEDIA_AUDIO);
+            if (isInCall) {
+                activeDeviceManager.setActiveDeviceBlocking(device,
+                                             ApmConstIntf.AudioFeatures.MEDIA_AUDIO);
+            } else {
+                activeDeviceManager.setActiveDevice(device,
+                                          ApmConstIntf.AudioFeatures.MEDIA_AUDIO);
+            }
         }
         return true;
     }

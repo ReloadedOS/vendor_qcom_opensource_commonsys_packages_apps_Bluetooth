@@ -313,12 +313,12 @@ public class ActiveDeviceManager {
                                                            ApmConstIntf.AudioFeatures.MEDIA_AUDIO);
                                     BluetoothDevice voiceActiveDevice = activeDeviceManager.getActiveAbsoluteDevice(
                                                            ApmConstIntf.AudioFeatures.CALL_AUDIO);
-                                    if (mediaActiveDevice != null) {
-                                        isMediaActive = (groupId == leAudioService.getGroupId(mediaActiveDevice));
-                                    }
-                                    if (voiceActiveDevice != null) {
-                                        isCallActive = (groupId == leAudioService.getGroupId(voiceActiveDevice));
-                                    }
+                                    Log.d(TAG, "mediaActiveDevice: " + mediaActiveDevice +
+                                                   " voiceActiveDevice: " + voiceActiveDevice);
+                                    isMediaActive =
+                                      (groupId == leAudioService.getGroupId(mediaActiveDevice));
+                                    isCallActive =
+                                      (groupId == leAudioService.getGroupId(voiceActiveDevice));
                                 }
 
                                 Log.w(TAG, "isMediaActive: " + isMediaActive +
@@ -1077,11 +1077,16 @@ public class ActiveDeviceManager {
                    " mMediaActiveProfile: " + mMediaActiveProfile +
                    ", mCallActiveProfile: " + mCallActiveProfile);
 
-        if (mMediaActiveProfile == ApmConstIntf.AudioProfiles.A2DP) {
+        if(ApmConstIntf.getQtiLeAudioEnabled() ||
+            ApmConstIntf.getAospLeaEnabled()) {
+            if (mMediaActiveProfile == ApmConstIntf.AudioProfiles.A2DP) {
+                setA2dpActiveDevice(null);
+            }
+            if (mCallActiveProfile == ApmConstIntf.AudioProfiles.HFP) {
+                setHfpActiveDevice(null);
+            }
+        } else {
             setA2dpActiveDevice(null);
-        }
-
-        if (mCallActiveProfile == ApmConstIntf.AudioProfiles.HFP) {
             setHfpActiveDevice(null);
         }
 

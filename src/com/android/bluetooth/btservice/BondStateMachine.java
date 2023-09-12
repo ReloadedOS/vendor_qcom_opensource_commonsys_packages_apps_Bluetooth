@@ -650,7 +650,10 @@ final class BondStateMachine extends StateMachine {
             intent.putExtra(BluetoothDevice.EXTRA_REASON, reason);
         }
         if (newState == BluetoothDevice.BOND_BONDED) {
-            int validAddr = devProp.getValidBDAddr();
+            int validAddr = 0;
+            if (devProp != null) {
+              validAddr = devProp.getValidBDAddr();
+            }
             if (validAddr == 0) {
                 intent.putExtra(BluetoothDevice.EXTRA_IS_PRIVATE_ADDRESS, true);
             }

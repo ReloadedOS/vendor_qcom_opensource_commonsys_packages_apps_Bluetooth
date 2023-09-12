@@ -291,9 +291,7 @@ public class CsipSetCoordinatorService extends ProfileService {
         if (mLocalAppId != -1) {
             unregisterGroupClientModule(mLocalAppId);
         }
-        // Cleanup native interface
-        mGroupNativeInterface.cleanup();
-        mGroupNativeInterface = null;
+        nativeCleanup();
 
         // Mark service as stopped
         setCsipSetCoordinatorService(null);
@@ -329,13 +327,7 @@ public class CsipSetCoordinatorService extends ProfileService {
         if (DBG) {
             Log.d(TAG, "cleanup()");
         }
-
-        // Cleanup native interface
-        if (mGroupNativeInterface != null) {
-            mGroupNativeInterface.cleanup();
-            mGroupNativeInterface = null;
-        }
-
+        nativeCleanup();
         // cleanup initializations
         mGroupScanner = null;
         mAdapterService = null;
@@ -1727,5 +1719,13 @@ public class CsipSetCoordinatorService extends ProfileService {
 
     private boolean isSetInComplete(DeviceGroup deviceGroup) {
         return deviceGroup.getDeviceGroupSize() != deviceGroup.getTotalDiscoveredGroupDevices();
+    }
+
+    // Cleanup native interface
+    private void nativeCleanup() {
+        if (mGroupNativeInterface != null) {
+            mGroupNativeInterface.cleanup();
+            mGroupNativeInterface = null;
+        }
     }
 }

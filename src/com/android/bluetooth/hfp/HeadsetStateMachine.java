@@ -1748,7 +1748,6 @@ public class HeadsetStateMachine extends StateMachine {
             // has SCO, dont need to update teh Audio Manager
 
             setAudioParameters();
-            mSystemInterface.getAudioManager().setBluetoothScoOn(true);
             Message m = obtainMessage(SCO_RETRIAL_NOT_REQ);
             sendMessageDelayed(m, SCO_RETRIAL_REQ_TIMEOUT);
 
