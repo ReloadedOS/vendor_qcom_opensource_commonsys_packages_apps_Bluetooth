@@ -1931,6 +1931,10 @@ public class AdapterService extends Service {
             PendingIntent intent, AttributionSource attributionSource) {
         BluetoothServerSocket bluetoothServerSocket;
 
+        /* Already bt cleanup might done, we can’t continue rfcomm connections*/
+        if (mAdapter == null) {
+          return;
+        }
         try {
             bluetoothServerSocket =
                     mAdapter.listenUsingRfcommWithServiceRecord(name, uuid);
@@ -6986,9 +6990,14 @@ public class AdapterService extends Service {
             if (DBG) Log.d(TAG, "getIdentityAddress null retruning " + address);
             return address;
         }
-        if (DBG) Log.d(TAG, "getIdentityAddress " + address + " - "
-                + identityDevice.getAddress());
-        return identityDevice.getAddress();
+        String maddress = identityDevice.getAddress();
+        if (Utils.isValidBtAddress(maddress)) {
+            if (DBG) Log.d(TAG, "getIdentityAddress " + address + " - "
+                + maddress);
+            return maddress;
+        }
+
+        return address;
     }
 
     public boolean isAdvAudioDevice(BluetoothDevice device) {

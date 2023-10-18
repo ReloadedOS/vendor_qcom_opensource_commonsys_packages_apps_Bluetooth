@@ -140,6 +140,15 @@ public final class Utils {
         return output;
     }
 
+    public static boolean isValidBtAddress(String address) {
+
+        if ((address.length() != 17) ||
+             address.equals("00:00:00:00:00:00")) {
+            return false;
+        }
+        return true;
+    }
+
     public static int byteArrayToInt(byte[] valueBuf) {
         return byteArrayToInt(valueBuf, 0);
     }

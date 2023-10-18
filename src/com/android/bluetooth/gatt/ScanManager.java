@@ -1696,8 +1696,14 @@ public class ScanManager {
                 return 0;
             }
             int val = 0;
-            int maxTotalTrackableAdvertisements =
-                    AdapterService.getAdapterService().getTotalNumOfTrackableAdvertisements();
+            int maxTotalTrackableAdvertisements = 0;
+
+            AdapterService mAdapService = AdapterService.getAdapterService();
+            if (mAdapService != null) {
+                maxTotalTrackableAdvertisements =
+                        mAdapService.getTotalNumOfTrackableAdvertisements();
+            }
+
             // controller based onfound onlost resources are scarce commodity; the
             // assignment of filters to num of beacons to track is configurable based
             // on hw capabilities. Apps give an intent and allocation of onfound

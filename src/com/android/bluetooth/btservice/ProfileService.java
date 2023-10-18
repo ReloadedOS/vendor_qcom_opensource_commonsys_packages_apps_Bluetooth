@@ -41,7 +41,7 @@ import com.android.bluetooth.Utils;
  * Base class for a background service that runs a Bluetooth profile
  */
 public abstract class ProfileService extends Service {
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
 
     public static final String BLUETOOTH_PRIVILEGED =
             android.Manifest.permission.BLUETOOTH_PRIVILEGED;

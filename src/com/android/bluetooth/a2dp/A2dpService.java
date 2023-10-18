@@ -993,7 +993,8 @@ public class A2dpService extends ProfileService {
                             "going for setActive in ActiveDeviceManagerService");
             }
             ActiveDeviceManagerServiceIntf activeDeviceManager = ActiveDeviceManagerServiceIntf.get();
-            return activeDeviceManager.setActiveDevice(device, ApmConstIntf.AudioFeatures.MEDIA_AUDIO, false);
+            activeDeviceManager.setActiveDevice(device, ApmConstIntf.AudioFeatures.MEDIA_AUDIO, false);
+            return true;
         }
 
         Log.d(TAG, "setActiveDevice: " + device );

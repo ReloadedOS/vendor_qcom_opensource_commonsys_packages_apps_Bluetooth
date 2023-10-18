@@ -102,9 +102,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.Iterator;
 import android.telecom.TelecomManager;
+import android.media.AudioDeviceInfo;
 
 /**
  * A Bluetooth Handset StateMachine
@@ -199,6 +201,8 @@ public class HeadsetStateMachine extends StateMachine {
     private static final int INCOMING_CALL_IND_DELAY = 200;
     private static final int MAX_RETRY_CONNECT_COUNT = 2;
     private static final String VOIP_CALL_NUMBER = "10000000";
+    private static final long POLL_TIME = 50;
+    private static final long DEVICE_SWITCH_TIME_MSEC = 1500;
 
     //VR app launched successfully
     private static final int VR_SUCCESS = 1;
@@ -1535,7 +1539,7 @@ public class HeadsetStateMachine extends StateMachine {
                                   + " or A2Dp is playing, not allowing SCO, device=" + mDevice);
                         break;
                     }
-
+                    mHeadsetService.getHfpA2DPSyncInterface().suspendLeAudio(HeadsetA2dpSync.A2DP_SUSPENDED_BY_CS_CALL);
                     Log.w(TAG, "mIsSwbSupportedByRemote is " + mIsSwbSupportedByRemote);
 
                     if (mIsSwbSupportedByRemote && mHeadsetService.isSwbEnabled() &&
@@ -1549,7 +1553,36 @@ public class HeadsetStateMachine extends StateMachine {
                            mHeadsetService.enableSwbCodec(false);
                         }
                     }
-
+                    boolean mBLEDeviceAvailable = false;
+                    long wait = 0;
+                    while (wait <= DEVICE_SWITCH_TIME_MSEC) {
+                      List<AudioDeviceInfo> devices =
+                             mSystemInterface.getAudioManager().getAvailableCommunicationDevices();
+                      Log.d(TAG,"audio devices size: " + devices.size());
+                      if (devices.size() > 0) {
+                         for (AudioDeviceInfo dev : devices) {
+                            if (dev.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET) {
+                               mBLEDeviceAvailable = true;
+                               break;
+                            } else {
+                               mBLEDeviceAvailable = false;
+                            }
+                         }
+                      } else {
+                          Log.d(TAG, "No Available communication Devices. No need to wait");
+                          break;
+                      }
+                      if (mBLEDeviceAvailable) {
+                        try {
+                           Thread.sleep(POLL_TIME);
+                           wait += POLL_TIME;
+                        } catch (InterruptedException e) {
+                           Log.e(TAG, "POLL Thread was interrupted", e);
+                        }
+                      } else {
+                         break;
+                      }
+                    }
                     if (!mNativeInterface.connectAudio(mDevice)) {
                         stateLogE("Failed to connect SCO audio for " + mDevice);
                         // No state change involved, fire broadcast immediately
